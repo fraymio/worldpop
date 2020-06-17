@@ -52,7 +52,6 @@ def raster2pgsql(raster, tile_size=400):
     """
     if shutil.which("raster2pgsql") is None:
         raise Exception("raster2pgsql must be installed")
-    # RASTER2PGSQL = "C:/Program Files/PostgresQL/11/bin/raster2pgsql"
     sp_args = [
         "raster2pgsql",
         "-s",
@@ -73,7 +72,7 @@ def raster2pgsql(raster, tile_size=400):
         elif line.startswith("INSERT INTO"):
             try:
                 raster_value = re.findall(rasthex, line)[0]
-                yield raster_value #+ "::raster"
+                yield raster_value  # + "::raster"
             except IndexError:
                 print(f"Other than one raster value found")
                 continue
@@ -86,11 +85,13 @@ class ST_Resample(GenericFunction):
     name = "ST_Resample"
     type = Raster
 
+
 class ST_MapAlgebra(GenericFunction):
     """ Map Algebra function """
 
     name = "ST_MapAlgebra"
     type = Raster
+
 
 def standardize_tile(tile, dev=False):
     """ Wrap a tile in the PostGIS resample function with the same arguments
@@ -105,13 +106,9 @@ def standardize_tile(tile, dev=False):
         0,  # skewy
         "NearestNeighbor",  # algorithm
     )
-    map_algebra_args = (
-        "32BSI", # 32 bit signed int
-        "[rast]"  # column expression
-    )
+    map_algebra_args = ("32BSI", "[rast]")  # 32 bit signed int  # column expression
     tile = ST_Resample(tile, *resample_args)
     if not dev:
         tile = ST_MapAlgebra(tile, *map_algebra_args)
     return tile
-
 
