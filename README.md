@@ -2,11 +2,15 @@
 
 ### Set up
 
+---
+
 Install python dependencies from `requirements.txt`
 To upload files to S3, you'll need to be signed into the AWS CLI.
 To insert files to the database, install PostGIS with the [`raster2pgsql`](https://postgis.net/docs/using_raster_dataman.html#RT_Raster_Loader) tool.
 
-## Use
+### Use
+
+---
 
 To download, resample, insert into database(s), and upload to S3 use the `worldpop_pipeline` function. Make sure no rasters matching those you're processing
 have already been added to the database. There are no constraints in the tables to prevent duplicates.
