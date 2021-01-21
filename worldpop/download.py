@@ -1,15 +1,16 @@
 """ Main function to download, process, and upload World Pop age gender rasters. """
-from ftplib import FTP
-import urllib.request
 import os
+import urllib.request
+from ftplib import FTP
+from pathlib import Path
 
 import boto3
 from botocore.exceptions import ClientError
 
-from .utils import resample_worldpop, worldpop_metadata
+from .utils import worldpop_metadata
 
 FTP_URL = "ftp.worldpop.org.uk"
-FTP_S_URL = "GIS/AgeSex_structures/Global_2000_2020/"
+PRODUCT_PATH = "GIS/AgeSex_structures/Global_2000_2020"
 S3_BUCKET = "fraym-worldpop"
 
 
@@ -23,22 +24,27 @@ def build_urls(iso3, year):
     """
     ftp = FTP(FTP_URL)
     ftp.login()
-    ftp.cwd(f"{FTP_S_URL}{year}")
+    ftp.cwd(f"{PRODUCT_PATH}/{year}")
     urls = ftp.nlst(iso3)
-    urls = [os.path.join("ftp://", FTP_URL, FTP_S_URL, str(year), x) for x in urls]
+    urls = [os.path.join("ftp://", FTP_URL, PRODUCT_PATH, str(year), x) for x in urls]
     return urls
 
 
-def download_worldpop(url):
+def download(url, out_dir=None):
     """
     Download a worldpop raster from the FTP server
 
     :param url to file endpoint
+    :type str
+
+    :param out_dir optional path to save file
+    :type str, optional
     """
-    urllib.request.urlretrieve(url, os.path.basename(url))
+    out_dir = Path(out_dir or "")
+    urllib.request.urlretrieve(url, out_dir / os.path.basename(url))
 
 
-def upload_worldpop(file, force=False):
+def upload_to_s3(file, force=False):
     """
     Upload World Pop files to Fraym's S3.
 
@@ -64,16 +70,3 @@ def upload_worldpop(file, force=False):
         if not force:
             return
     s3.upload_file(file, S3_BUCKET, f"{prefix}/{basename}")
-
-
-def remove_worldpop(file):
-    """
-    Removes a worldpop raster from working directory after
-    it is resampled and sent to s3. This avoids bloating your .
-
-    :param file is the processed raster
-    """
-    if os.path.isfile(file):
-        os.remove(file)
-    else:
-        print(f"Error: {file} not found")

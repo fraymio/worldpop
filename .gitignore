@@ -128,3 +128,6 @@ dmypy.json
 .vscode
 
 .DS_Store
+
+# Ignore rasters
+*.tif

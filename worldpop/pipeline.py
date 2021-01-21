@@ -5,17 +5,17 @@ import os
 import boto3
 from botocore.exceptions import ClientError
 
-from .utils import resample_worldpop, worldpop_metadata
-from .insert import insert_worldpop
-from worldpop.download import download_worldpop
+from .download import download
+from .insert import insert
+from .utils import resample, worldpop_metadata
 
 FTP_URL = "ftp.worldpop.org.uk"
-FTP_S_URL = "GIS/AgeSex_structures/Global_2000_2020/"
+PRODUCT_PATH = "GIS/AgeSex_structures/Global_2000_2020"
 S3_BUCKET = "fraym-worldpop"
 
 
-def worldpop_pipeline(iso3_code, year, production=True, dev=True):
-    """Download World Pop age and gender population rasters, resample to 1x1km
+def pipeline(iso3_code, year, production=True, dev=True):
+    """ Download World Pop age and gender population rasters, resample to 1x1km
     and upload to S3 bucket
 
     :param iso3_code country code
@@ -38,7 +38,7 @@ def worldpop_pipeline(iso3_code, year, production=True, dev=True):
     s3 = boto3.client("s3")
     ftp = ftplib.FTP(FTP_URL)
     ftp.login()
-    ftp.cwd(f"{FTP_S_URL}{year}")
+    ftp.cwd(f"{PRODUCT_PATH}/{year}")
 
     prefix = f"{year}/{iso3_code.lower()}"
 
@@ -53,12 +53,8 @@ def worldpop_pipeline(iso3_code, year, production=True, dev=True):
         except ClientError:
             pass
         # Download and resample
-        download_worldpop(
-            os.path.join(
-                "ftp://", FTP_URL, FTP_S_URL, str(year), iso3_code.upper(), basename
-            )
-        )
-        resample_worldpop(basename)
+        download(os.path.join("ftp://", FTP_URL, PRODUCT_PATH, str(year), remote))
+        resample(basename)
 
         # Pull out metadata and insert into database(s)
         _file_iso3, gender, age_lower, age_upper, _file_year = worldpop_metadata(
@@ -66,9 +62,9 @@ def worldpop_pipeline(iso3_code, year, production=True, dev=True):
         )
 
         if dev:
-            insert_worldpop(basename, year, gender, age_lower, age_upper, dev=True)
+            insert(basename, year, gender, age_lower, age_upper, dev=True)
         if production:
-            insert_worldpop(basename, year, gender, age_lower, age_upper, dev=False)
+            insert(basename, year, gender, age_lower, age_upper, dev=False)
 
         # Upload to S3 and delete
         s3.upload_file(basename, S3_BUCKET, f"{prefix}/{basename}")
