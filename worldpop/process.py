@@ -7,13 +7,15 @@ from botocore.exceptions import ClientError
 
 from .utils import resample_worldpop, worldpop_metadata
 from .insert import insert_worldpop
+from worldpop.download import download_worldpop
 
 FTP_URL = "ftp.worldpop.org.uk"
+FTP_S_URL = "GIS/AgeSex_structures/Global_2000_2020/"
 S3_BUCKET = "fraym-worldpop"
 
 
 def worldpop_pipeline(iso3_code, year, production=True, dev=True):
-    """ Download World Pop age and gender population rasters, resample to 1x1km
+    """Download World Pop age and gender population rasters, resample to 1x1km
     and upload to S3 bucket
 
     :param iso3_code country code
@@ -36,8 +38,7 @@ def worldpop_pipeline(iso3_code, year, production=True, dev=True):
     s3 = boto3.client("s3")
     ftp = ftplib.FTP(FTP_URL)
     ftp.login()
-    ftp.cwd("GIS/AgeSex_structures/Global_2000_2020")
-    ftp.cwd(str(year))
+    ftp.cwd(f"{FTP_S_URL}{year}")
 
     prefix = f"{year}/{iso3_code.lower()}"
 
@@ -52,8 +53,13 @@ def worldpop_pipeline(iso3_code, year, production=True, dev=True):
         except ClientError:
             pass
         # Download and resample
-        ftp.retrbinary(f"RETR {remote}", open(basename, "wb").write)
+        download_worldpop(
+            os.path.join(
+                "ftp://", FTP_URL, FTP_S_URL, str(year), iso3_code.upper(), basename
+            )
+        )
         resample_worldpop(basename)
+
         # Pull out metadata and insert into database(s)
         _file_iso3, gender, age_lower, age_upper, _file_year = worldpop_metadata(
             basename
