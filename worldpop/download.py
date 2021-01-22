@@ -4,14 +4,8 @@ import urllib.request
 from ftplib import FTP
 from pathlib import Path
 
-import boto3
-from botocore.exceptions import ClientError
-
-from .utils import worldpop_metadata
-
 FTP_URL = "ftp.worldpop.org.uk"
 PRODUCT_PATH = "GIS/AgeSex_structures/Global_2000_2020"
-S3_BUCKET = "fraym-worldpop"
 
 
 def build_urls(iso3, year):
@@ -42,31 +36,3 @@ def download(url, out_dir=None):
     """
     out_dir = Path(out_dir or "")
     urllib.request.urlretrieve(url, out_dir / os.path.basename(url))
-
-
-def upload_to_s3(file, force=False):
-    """
-    Upload World Pop files to Fraym's S3.
-
-    :param file name of World Pop, must be in the same format as the original World Pop
-        files to extract metadata from file name
-    :type str
-
-    :param force whether to force the upload overwriting existing file
-    :type bool
-
-    :rtype None, file is uploaded
-    """
-    s3 = boto3.client("s3")
-    basename = os.path.basename(file)
-
-    iso3_code, *_age_gender, year = worldpop_metadata(basename)
-    prefix = f"{year}/{iso3_code.lower()}"
-
-    # Skip files that have already been uploaded
-    try:
-        s3.head_object(Bucket=S3_BUCKET, Key=f"{prefix}/{basename}")
-    except ClientError:
-        if not force:
-            return
-    s3.upload_file(file, S3_BUCKET, f"{prefix}/{basename}")
