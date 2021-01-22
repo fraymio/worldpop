@@ -40,16 +40,16 @@ There are also functions to run part of the pipeline:
 import os
 import worldpop as wp
 
-iso3_code = "YEM"
+iso3_code = "LBR"
 
 for year in range(2000, 2021):
-    print(f"Processing {year}: ", end="", flush=True)
+    print(f"\nProcessing {year}: ", end="", flush=True)
     for i, url in enumerate(wp.build_urls(iso3_code, year)):
         print(f"{i+1}..", end="", flush=True)
         out_path = os.path.basename(url)
         wp.download(url)
         wp.resample(out_path)
         wp.upload_to_s3(out_path)
-        wp.insert_from_s3(iso3_code, year, tile_size=400, dev=True)
         os.remove(out_path)
+    wp.insert_from_s3(iso3_code, year, tile_size=400, dev=True)
 ```

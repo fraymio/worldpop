@@ -77,8 +77,7 @@ def insert_from_s3(iso3_code: str, year: int, tile_size: int = 400, dev: bool = 
     s3 = boto3.resource("s3")
     pattern = re.compile(r"^[0-9]{4}/[a-z]{3}/.*.tif$")
     for obj in s3.Bucket(S3_BUCKET).objects.iterator():
-        insert = re.findall(pattern, obj.key)
-        if not insert:
+        if not pattern.findall(obj.key):
             continue
         local = os.path.basename(obj.key)
         file_iso3, gender, age_lower, age_upper, file_year = worldpop_metadata(local)
