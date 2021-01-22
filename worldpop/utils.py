@@ -29,7 +29,7 @@ def tempraster():
     return f"/vsimem/{uuid.uuid4().hex}.tif"
 
 
-def resample_worldpop(file):
+def resample(file):
     """ Resample a WorldPop raster from 100sqm to 1sqkm
 
     :param file File name of raster data

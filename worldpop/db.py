@@ -3,12 +3,11 @@ import re
 import shutil
 import subprocess
 
+import sqlalchemy as sa
 from geoalchemy2 import Raster
 from geoalchemy2.functions import GenericFunction
-import sqlalchemy as sa
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-
+from sqlalchemy.orm import sessionmaker
 
 DB_HOST = "westpark.cm13ryecdchl.us-east-1.rds.amazonaws.com"
 DB_USERNAME = "westpark_admin"

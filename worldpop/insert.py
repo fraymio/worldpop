@@ -1,18 +1,17 @@
 """ Main function to insert preprocessed World Pop rasters into the database. """
-from typing import Optional
-
 import os
 import re
+from typing import Optional
 
 import boto3
 
-from .db import create_session, raster2pgsql, standardize_tile, WorldPop
+from .db import WorldPop, create_session, raster2pgsql, standardize_tile
 from .utils import worldpop_metadata
 
 S3_BUCKET = "fraym-worldpop"
 
 
-def insert_worldpop(
+def insert(
     file: str,
     year: int,
     gender: str,
@@ -57,9 +56,7 @@ def insert_worldpop(
         wp_tile = None
 
 
-def insert_worldpop_from_s3(
-    iso3_code: str, year: int, tile_size: int = 400, dev: bool = False
-):
+def insert_from_s3(iso3_code: str, year: int, tile_size: int = 400, dev: bool = False):
     """
     :param iso3_code country code
     :type str
@@ -80,8 +77,7 @@ def insert_worldpop_from_s3(
     s3 = boto3.resource("s3")
     pattern = re.compile(r"^[0-9]{4}/[a-z]{3}/.*.tif$")
     for obj in s3.Bucket(S3_BUCKET).objects.iterator():
-        insert = re.findall(pattern, obj.key)
-        if not insert:
+        if not pattern.findall(obj.key):
             continue
         local = os.path.basename(obj.key)
         file_iso3, gender, age_lower, age_upper, file_year = worldpop_metadata(local)
@@ -91,7 +87,7 @@ def insert_worldpop_from_s3(
             # For the 80 and up group, set upper bound to missing
             age_upper = None
         s3.meta.client.download_file(S3_BUCKET, obj.key, local)
-        insert_worldpop(
+        insert(
             local, year, gender, age_lower, age_upper, tile_size=tile_size, dev=dev,
         )
         try:
