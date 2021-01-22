@@ -19,8 +19,11 @@ def build_urls(iso3, year):
     ftp = FTP(FTP_URL)
     ftp.login()
     ftp.cwd(f"{PRODUCT_PATH}/{year}")
-    urls = ftp.nlst(iso3)
-    urls = [os.path.join("ftp://", FTP_URL, PRODUCT_PATH, str(year), x) for x in urls]
+
+    urls = []
+    for f in ftp.nlst(iso3.upper()):
+        if f.endswith(".tif"):
+            urls.append(os.path.join("ftp://", FTP_URL, PRODUCT_PATH, str(year), f))
     return urls
 
 
