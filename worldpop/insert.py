@@ -4,6 +4,7 @@ import re
 from typing import Optional
 
 import boto3
+from sqlalchemy import exc
 
 from .db import WorldPop, create_session, raster2pgsql, standardize_tile
 from .utils import worldpop_metadata
@@ -32,7 +33,7 @@ def insert(
         age_upper = None
 
     wp_data = dict(
-        iso3_code=iso3_code,
+        iso3_code=iso3_code.upper(),
         year=year,
         gender=gender.lower(),
         age_lower=age_lower,
@@ -45,9 +46,9 @@ def insert(
         db_session.add(wp_tile)
         try:
             db_session.commit()
-        except Exception as err:
+        except exc.IntegrityError as err:
             db_session.rollback()
-            raise Exception from err
+            raise err
         wp_tile = None
 
 
@@ -70,11 +71,15 @@ def insert_from_s3(iso3_code: str, year: int, tile_size: int = 400, dev: bool = 
     """
 
     s3 = boto3.resource("s3")
-    for obj in s3.Bucket(S3_BUCKET).objects.filter(f"{year}/{iso3_code.lower()}"):
+    for obj in s3.Bucket(S3_BUCKET).objects.filter(
+        Prefix=f"{year}/{iso3_code.lower()}"
+    ):
         local = os.path.basename(obj.key)
         s3.meta.client.download_file(S3_BUCKET, obj.key, local)
-        insert(local, tile_size=tile_size, dev=dev)
         try:
-            os.remove(local)
-        except (FileNotFoundError, PermissionError):
-            pass
+            insert(local, tile_size=tile_size, dev=dev)
+        except exc.IntegrityError as err:
+            raise err
+        finally:
+            if os.path.exists(local):
+                os.remove(local)
