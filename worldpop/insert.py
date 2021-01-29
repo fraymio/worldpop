@@ -1,7 +1,5 @@
 """ Main function to insert preprocessed World Pop rasters into the database. """
 import os
-import re
-from typing import Optional
 
 import boto3
 from sqlalchemy import exc
