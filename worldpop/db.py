@@ -37,10 +37,12 @@ class WorldPop(Base):
 
     __tablename__ = "worldpop"
 
-    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
+    # id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
+    iso3_code = sa.Column(sa.String(3), primary_key=True)
+    tile_number = sa.Column(sa.Integer, primary_key=True)
     year = sa.Column(sa.Integer, primary_key=True)
-    gender = sa.Column(sa.String(8))
-    age_lower = sa.Column(sa.Integer, nullable=False)
+    gender = sa.Column(sa.String(1), primary_key=True)
+    age_lower = sa.Column(sa.Integer, primary_key=True)
     age_upper = sa.Column(sa.Integer, nullable=True)
     rast = sa.Column(Raster)
 
@@ -99,8 +101,8 @@ def standardize_tile(tile, dev=False):
     resample_args = (
         0.00833333329986236,  # scalex
         -0.00833333329986236,  # scaley
-        -17.543749915,  # gridx
-        37.560416718,  # gridy
+        0,  # -17.543749915,  # gridx
+        0,  # 37.560416718,  # gridy
         0,  # skewx
         0,  # skewy
         "NearestNeighbor",  # algorithm
