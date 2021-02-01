@@ -36,6 +36,7 @@ class WorldPop(Base):
     """ World Pop table class"""
 
     __tablename__ = "worldpop"
+    __table_args__ = {"schema": "sandbox"}
 
     iso3_code = sa.Column(sa.String(3), primary_key=True)
     tile_number = sa.Column(sa.Integer, primary_key=True)
