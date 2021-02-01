@@ -72,6 +72,8 @@ def insert_from_s3(iso3_code: str, year: int, tile_size: int = 400, dev: bool = 
     for obj in s3.Bucket(S3_BUCKET).objects.filter(
         Prefix=f"{year}/{iso3_code.lower()}"
     ):
+        if not obj.key.endswith(".tif"):
+            continue
         local = os.path.basename(obj.key)
         s3.meta.client.download_file(S3_BUCKET, obj.key, local)
         try:

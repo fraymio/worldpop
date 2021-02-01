@@ -36,7 +36,6 @@ class WorldPop(Base):
     """ World Pop table class"""
 
     __tablename__ = "worldpop"
-    __table_args__ = {"schema": "sandbox"}
 
     iso3_code = sa.Column(sa.String(3), primary_key=True)
     tile_number = sa.Column(sa.Integer, primary_key=True)
@@ -73,7 +72,7 @@ def raster2pgsql(raster, tile_size=400):
         elif line.startswith("INSERT INTO"):
             try:
                 raster_value = re.findall(rasthex, line)[0]
-                yield raster_value  # + "::raster"
+                yield raster_value
             except IndexError:
                 print(f"Other than one raster value found")
                 continue
@@ -101,8 +100,8 @@ def standardize_tile(tile, dev=False):
     resample_args = (
         0.00833333329986236,  # scalex
         -0.00833333329986236,  # scaley
-        0,  # -17.543749915,  # gridx
-        0,  # 37.560416718,  # gridy
+        0,  # gridx
+        0,  # gridy
         0,  # skewx
         0,  # skewy
         "NearestNeighbor",  # algorithm
